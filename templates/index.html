@@ -68,13 +68,47 @@
 
     <xml id="toolbox" style="display: none">
         <category name="マウス操作" colour="120">
-            <block type="mouse_move_absolute"></block>
-            <block type="mouse_move_relative"></block>
-            <block type="mouse_scroll"></block>
+            <block type="mouse_move_absolute">
+                <value name="X">
+                    <block type="math_number">
+                        <field name="NUM">0</field>
+                    </block>
+                </value>
+                <value name="Y">
+                    <block type="math_number">
+                        <field name="NUM">0</field>
+                    </block>
+                </value>
+            </block>
+            <block type="mouse_move_relative">
+                <value name="X">
+                    <block type="math_number">
+                        <field name="NUM">0</field>
+                    </block>
+                </value>
+                <value name="Y">
+                    <block type="math_number">
+                        <field name="NUM">0</field>
+                    </block>
+                </value>
+            </block>
+            <block type="mouse_scroll">
+                <value name="AMOUNT">
+                    <block type="math_number">
+                        <field name="NUM">3</field>
+                    </block>
+                </value>
+            </block>
             <block type="mouse_single_click"></block>
             <block type="mouse_double_click"></block>
             <block type="mouse_triple_click"></block>
-            <block type="mouse_long_press"></block>
+            <block type="mouse_long_press">
+                <value name="DURATION">
+                    <block type="math_number">
+                        <field name="NUM">1</field>
+                    </block>
+                </value>
+            </block>
             <block type="mouse_release"></block>
             <block type="mouse_middle_click"></block>
         </category>
@@ -83,18 +117,43 @@
             <block type="type_text"></block>
         </category>
         <category name="制御" colour="160">
-            <block type="wait"></block>
-            <block type="repeat_times"></block>
+            <block type="wait">
+                <value name="TIME">
+                    <block type="math_number">
+                        <field name="NUM">1</field>
+                    </block>
+                </value>
+            </block>
+            <block type="repeat_times">
+                <value name="TIMES">
+                    <block type="math_number">
+                        <field name="NUM">1</field>
+                    </block>
+                </value>
+            </block>
         </category>
         <category name="ブラウザ制御" colour="290">
             <block type="browser_open_url"></block>
             <block type="browser_refresh"></block>
-            <block type="wait_for_element"></block>
+            <block type="wait_for_element">
+                <value name="TIMEOUT">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+                <value name="CONFIDENCE">
+                    <block type="math_number">
+                        <field name="NUM">80</field>
+                    </block>
+                </value>
+            </block>
         </category>
         <category name="変数" colour="330">
             <block type="variables_set"></block>
             <block type="variables_get"></block>
-            <block type="math_number"></block>
+            <block type="math_number">
+                <field name="NUM">0</field>
+            </block>
         </category>
         <category name="画像" colour="340">
             <block type="image_variable"></block>
