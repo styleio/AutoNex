@@ -18,6 +18,9 @@ window.addEventListener('load', function() {
     
     // 保存済みプログラムを読み込み
     loadSavedPrograms();
+    
+    // 画像ライブラリを読み込み
+    refreshImageLibrary();
 });
 
 // コントロールの初期化
@@ -35,6 +38,9 @@ function initControls() {
             document.getElementById('program-name').value = this.value;
         }
     });
+    
+    // 画像ライブラリコントロールを初期化
+    initImageLibrary();
 }
 
 // プログラム実行
@@ -479,6 +485,316 @@ async function setFailsafeMode(enabled) {
         }
     } catch (error) {
         console.error('フェイルセーフ設定通信エラー:', error);
+    }
+}
+
+// ブラウザ制御関数
+async function openUrl(url, waitForLoad = false, waitTime = 3) {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    const logMessage = waitForLoad ? 
+        `URL開く: ${url} (${waitTime}秒待機)` : 
+        `URL開く: ${url}`;
+    addLog(logMessage, 'info');
+    
+    const response = await fetch('/api/browser/open-url', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            url, 
+            waitForLoad, 
+            waitTime 
+        })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'URL開くエラー');
+    }
+}
+
+async function refreshBrowser() {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    addLog('ブラウザ更新', 'info');
+    
+    const response = await fetch('/api/browser/refresh', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'ブラウザ更新エラー');
+    }
+}
+
+async function waitForElement(imageData, timeout = 30, confidence = 80) {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    addLog(`要素出現待機: タイムアウト${timeout}秒、信頼度${confidence}%`, 'info');
+    
+    const response = await fetch('/api/browser/wait-for-element', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            imageData,
+            timeout: parseInt(timeout),
+            confidence: parseFloat(confidence) / 100  // パーセントから小数に変換
+        })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || '要素出現待機エラー');
+    }
+    
+    addLog(`要素が見つかりました: (${data.location.x}, ${data.location.y})`, 'success');
+    return data.location;
+}
+
+async function waitForElementByName(imageName, timeout = 30, confidence = 80) {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    if (!imageName) {
+        throw new Error('画像名が指定されていません');
+    }
+    
+    // 画像データを名前で取得
+    const imageResponse = await fetch(`/api/images/get/${encodeURIComponent(imageName)}`);
+    if (!imageResponse.ok) {
+        throw new Error(`画像「${imageName}」が見つかりません`);
+    }
+    
+    const imageData = await imageResponse.json();
+    return await waitForElement(imageData.image.data, timeout, confidence);
+}
+
+
+function updateImageDropdowns(images) {
+    // すべてのimage_nameドロップダウンを更新
+    const blocks = workspace.getAllBlocks();
+    
+    blocks.forEach(block => {
+        if (block.type === 'wait_for_element' || block.type === 'image_variable') {
+            const dropdown = block.getField('IMAGE_NAME');
+            if (dropdown) {
+                // 新しいオプションを作成
+                const options = [['画像を選択', '']];
+                images.forEach(img => {
+                    options.push([img.name, img.name]);
+                });
+                
+                // ドロップダウンを更新
+                dropdown.menuGenerator_ = options;
+                dropdown.setValue('');
+            }
+        }
+    });
+}
+
+
+// 画像ライブラリの初期化
+function initImageLibrary() {
+    const uploadZone = document.getElementById('upload-zone');
+    const uploadInput = document.getElementById('image-upload-input');
+    
+    // クリックでファイル選択
+    uploadZone.addEventListener('click', () => {
+        uploadInput.click();
+    });
+    
+    // ファイル選択時の処理
+    uploadInput.addEventListener('change', handleFileUpload);
+    
+    // ドラッグ＆ドロップ機能
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileUpload({ target: { files: files } });
+        }
+    });
+}
+
+async function handleFileUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+            showMessage('画像ファイルのみアップロード可能です', 'error');
+            continue;
+        }
+        
+        // 画像名を入力
+        const imageName = prompt('画像の名前を入力してください:', file.name.replace(/\.[^/.]+$/, ""));
+        if (!imageName) continue;
+        
+        try {
+            // ファイルをBase64に変換
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imageData = e.target.result;
+                    
+                    // サーバーにアップロード
+                    const response = await fetch('/api/images/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: imageName,
+                            imageData: imageData
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (response.ok) {
+                        showMessage(`画像「${imageName}」をアップロードしました`, 'success');
+                        await refreshImageLibrary();
+                    } else {
+                        showMessage(result.error || 'アップロードエラー', 'error');
+                    }
+                } catch (error) {
+                    showMessage(`アップロードエラー: ${error.message}`, 'error');
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            showMessage(`ファイル読み込みエラー: ${error.message}`, 'error');
+        }
+    }
+    
+    // input をリセット
+    event.target.value = '';
+}
+
+async function refreshImageLibrary() {
+    try {
+        const response = await fetch('/api/images/list');
+        const data = await response.json();
+        
+        if (response.ok) {
+            displayImageList(data.images);
+            updateImageDropdowns(data.images);
+        }
+    } catch (error) {
+        console.error('画像リスト取得エラー:', error);
+    }
+}
+
+function displayImageList(images) {
+    const imageList = document.getElementById('image-list');
+    
+    if (images.length === 0) {
+        imageList.innerHTML = '<div class="no-images">画像がありません</div>';
+        return;
+    }
+    
+    imageList.innerHTML = '';
+    
+    images.forEach(image => {
+        const imageItem = document.createElement('div');
+        imageItem.className = 'image-item';
+        
+        const createdDate = new Date(image.created).toLocaleDateString('ja-JP');
+        
+        imageItem.innerHTML = `
+            <img class="image-thumbnail" src="" alt="${image.name}" data-image-name="${image.name}">
+            <div class="image-info">
+                <div class="image-name">${image.name}</div>
+                <div class="image-meta">${createdDate}</div>
+            </div>
+            <div class="image-actions">
+                <button class="btn-icon delete" onclick="deleteImage('${image.name}')" title="削除">🗑️</button>
+            </div>
+        `;
+        
+        // サムネイル画像を非同期で読み込み
+        const thumbnail = imageItem.querySelector('.image-thumbnail');
+        // 初期状態でローディング表示
+        setLoadingThumbnail(thumbnail);
+        loadThumbnail(thumbnail, image.name);
+        
+        imageList.appendChild(imageItem);
+    });
+}
+
+async function loadThumbnail(imgElement, imageName) {
+    try {
+        console.log('Loading thumbnail for:', imageName);
+        const response = await fetch(`/api/images/get/${encodeURIComponent(imageName)}`);
+        console.log('Thumbnail response status:', response.status);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Thumbnail data received:', data);
+            
+            if (data.status === 'success' && data.image && data.image.data) {
+                imgElement.src = data.image.data;
+                console.log('Thumbnail set successfully');
+            } else {
+                console.error('Invalid thumbnail data:', data);
+                setErrorThumbnail(imgElement);
+            }
+        } else {
+            console.error('Thumbnail fetch failed:', response.status);
+            setErrorThumbnail(imgElement);
+        }
+    } catch (error) {
+        console.error('サムネイル読み込みエラー:', error);
+        setErrorThumbnail(imgElement);
+    }
+}
+
+function setLoadingThumbnail(imgElement) {
+    // ローディング用のプレースホルダー画像
+    imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNlY2YwZjEiLz48dGV4dCB4PSIyMCIgeT0iMjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM3ZjhjOGQiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4cHgiPi4uLjwvdGV4dD48L3N2Zz4K';
+}
+
+function setErrorThumbnail(imgElement) {
+    // エラー用のプレースホルダー画像
+    imgElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNmOGY5ZmEiLz48dGV4dCB4PSIyMCIgeT0iMjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNlNzRjM2MiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMnB4Ij7ijJw8L3RleHQ+PC9zdmc+';
+}
+
+async function deleteImage(imageName) {
+    if (!confirm(`画像「${imageName}」を削除しますか？`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/images/delete/${encodeURIComponent(imageName)}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        if (response.ok) {
+            showMessage(result.message, 'success');
+            await refreshImageLibrary();
+        } else {
+            showMessage(result.error || '削除エラー', 'error');
+        }
+    } catch (error) {
+        showMessage(`削除エラー: ${error.message}`, 'error');
     }
 }
 

@@ -245,6 +245,70 @@ function defineCustomBlocks() {
             "nextStatement": null,
             "colour": 160,
             "tooltip": "指定した回数繰り返します"
+        },
+        // ブラウザ制御
+        {
+            "type": "browser_open_url",
+            "message0": "URL %1 を開く",
+            "args0": [
+                {
+                    "type": "field_input",
+                    "name": "URL",
+                    "text": "https://"
+                }
+            ],
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": 290,
+            "tooltip": "指定したURLをブラウザで開きます"
+        },
+        {
+            "type": "browser_refresh",
+            "message0": "ブラウザを更新",
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": 290,
+            "tooltip": "現在のブラウザページを更新します"
+        },
+        {
+            "type": "wait_for_element",
+            "message0": "要素 %1 が出現するまで %2 秒待機（信頼度 %3 %）",
+            "args0": [
+                {
+                    "type": "field_dropdown",
+                    "name": "IMAGE_NAME",
+                    "options": [["画像を選択", ""]]
+                },
+                {
+                    "type": "input_value",
+                    "name": "TIMEOUT",
+                    "check": "Number"
+                },
+                {
+                    "type": "input_value", 
+                    "name": "CONFIDENCE",
+                    "check": "Number"
+                }
+            ],
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": 290,
+            "tooltip": "指定した画像要素が画面に出現するまで待機します"
+        },
+        // 画像管理
+        {
+            "type": "image_variable",
+            "message0": "画像 %1",
+            "args0": [
+                {
+                    "type": "field_dropdown",
+                    "name": "IMAGE_NAME",
+                    "options": [["画像を選択", ""]]
+                }
+            ],
+            "output": "String",
+            "colour": 340,
+            "tooltip": "保存された画像変数を参照します"
         }
     ]);
 
@@ -318,6 +382,30 @@ function defineCustomBlocks() {
         const statements_do = generator.statementToCode(block, 'DO');
         return 'for (let i = 0; i < ' + value_times + '; i++) {\n' + statements_do + '}\n';
     };
+
+    javascript.javascriptGenerator.forBlock['browser_open_url'] = function(block, generator) {
+        const text_url = block.getFieldValue('URL');
+        const escaped_url = text_url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return 'await openUrl(\'' + escaped_url + '\');\n';
+    };
+
+
+    javascript.javascriptGenerator.forBlock['browser_refresh'] = function(block, generator) {
+        return 'await refreshBrowser();\n';
+    };
+
+    javascript.javascriptGenerator.forBlock['wait_for_element'] = function(block, generator) {
+        const image_name = block.getFieldValue('IMAGE_NAME');
+        const timeout = generator.valueToCode(block, 'TIMEOUT', javascript.Order.ATOMIC) || '30';
+        const confidence = generator.valueToCode(block, 'CONFIDENCE', javascript.Order.ATOMIC) || '80';
+        return 'await waitForElementByName(\'' + image_name + '\', ' + timeout + ', ' + confidence + ');\n';
+    };
+
+
+    javascript.javascriptGenerator.forBlock['image_variable'] = function(block, generator) {
+        const image_name = block.getFieldValue('IMAGE_NAME');
+        return ['\'' + image_name + '\'', javascript.Order.ATOMIC];
+    };
 }
 
 // Blocklyワークスペースの初期化
@@ -342,7 +430,7 @@ function initializeBlockly() {
             minScale: 0.3,
             scaleSpeed: 1.2
         },
-        trashcan: true
+        trashcan: true,
     });
     
     console.log('Blockly workspace initialized with custom blocks');

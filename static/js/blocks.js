@@ -164,4 +164,43 @@ Blockly.JavaScript['repeat_times'] = function(block) {
     return code;
 };
 
+// ブラウザ制御ブロック
+// URLを開くブロック
+Blockly.Blocks['browser_open_url'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("URL")
+            .appendField(new Blockly.FieldTextInput("https://"), "URL")
+            .appendField("を開く");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(290);
+        this.setTooltip("指定したURLをブラウザで開きます");
+    }
+};
+
+Blockly.JavaScript['browser_open_url'] = function(block) {
+    var text_url = block.getFieldValue('URL');
+    var escaped_url = text_url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    var code = 'await openUrl(\'' + escaped_url + '\');\n';
+    return code;
+};
+
+// ブラウザ更新ブロック
+Blockly.Blocks['browser_refresh'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("ブラウザを更新");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(290);
+        this.setTooltip("現在のブラウザページを更新します");
+    }
+};
+
+Blockly.JavaScript['browser_refresh'] = function(block) {
+    var code = 'await refreshBrowser();\n';
+    return code;
+};
+
 console.log('Custom blocks loaded');

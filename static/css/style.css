@@ -189,6 +189,140 @@ body {
     font-weight: 500;
 }
 
+.image-library-panel {
+    border-bottom: 1px solid #ddd;
+    padding: 20px;
+    max-height: 400px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.image-library-panel h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.upload-area {
+    margin-bottom: 15px;
+}
+
+.upload-zone {
+    border: 2px dashed #bdc3c7;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-zone:hover {
+    border-color: #3498db;
+    background-color: #ebf3fd;
+}
+
+.upload-zone.dragover {
+    border-color: #27ae60;
+    background-color: #e8f5e9;
+}
+
+.upload-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.upload-zone p {
+    margin: 0;
+    font-size: 14px;
+    color: #7f8c8d;
+    line-height: 1.4;
+}
+
+.image-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 150px;
+}
+
+.no-images {
+    text-align: center;
+    color: #bdc3c7;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+.image-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ecf0f1;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.image-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+}
+
+.image-thumbnail {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+    margin-right: 12px;
+}
+
+.image-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.image-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: #2c3e50;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.image-meta {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-top: 2px;
+}
+
+.image-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    padding: 6px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    background-color: transparent;
+}
+
+.btn-icon:hover {
+    background-color: #ecf0f1;
+}
+
+.btn-icon.delete:hover {
+    background-color: #ffebee;
+    color: #e74c3c;
+}
+
 .log-panel {
     flex: 1;
     display: flex;
@@ -266,3 +400,4 @@ body {
 .blocklyTreeLabel {
     color: white !important;
 }
+

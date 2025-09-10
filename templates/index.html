@@ -45,6 +45,20 @@
                 </div>
             </div>
             
+            <div class="image-library-panel">
+                <h3>画像ライブラリ</h3>
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-zone" id="upload-zone">
+                        <i class="upload-icon">📁</i>
+                        <p>画像をドラッグ＆ドロップ<br>またはクリックして選択</p>
+                        <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+                <div class="image-list" id="image-list">
+                    <div class="no-images">画像がありません</div>
+                </div>
+            </div>
+            
             <div class="log-panel">
                 <h3>実行ログ</h3>
                 <div id="execution-log"></div>
@@ -72,10 +86,18 @@
             <block type="wait"></block>
             <block type="repeat_times"></block>
         </category>
+        <category name="ブラウザ制御" colour="290">
+            <block type="browser_open_url"></block>
+            <block type="browser_refresh"></block>
+            <block type="wait_for_element"></block>
+        </category>
         <category name="変数" colour="330">
             <block type="variables_set"></block>
             <block type="variables_get"></block>
             <block type="math_number"></block>
+        </category>
+        <category name="画像" colour="340">
+            <block type="image_variable"></block>
         </category>
     </xml>
 
