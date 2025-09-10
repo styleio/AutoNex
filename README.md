@@ -22,8 +22,8 @@ AutoNexは、Blocklyベースのビジュアルプログラミング環境でブ
 
 1. **リポジトリをクローン**
    ```bash
-   git clone <repository-url>
-   cd WebMaestro
+   git clone https://github.com/styleio/AutoNex.git
+   cd AutoNex
    ```
 
 2. **依存関係をインストール**
