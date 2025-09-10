@@ -433,6 +433,19 @@ function initializeBlockly() {
         trashcan: true,
     });
     
+    // ワークスペースの変更イベントを監視して画像ドロップダウンを更新
+    workspace.addChangeListener(function(event) {
+        if (event.type === Blockly.Events.BLOCK_CREATE || 
+            event.type === Blockly.Events.BLOCK_DELETE ||
+            event.type === Blockly.Events.FINISHED_LOADING) {
+            setTimeout(() => {
+                if (typeof forceUpdateImageDropdowns === 'function') {
+                    forceUpdateImageDropdowns();
+                }
+            }, 100);
+        }
+    });
+    
     console.log('Blockly workspace initialized with custom blocks');
     return workspace;
 }

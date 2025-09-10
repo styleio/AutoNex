@@ -21,6 +21,11 @@ window.addEventListener('load', function() {
     
     // 画像ライブラリを読み込み
     refreshImageLibrary();
+    
+    // 定期的に画像ドロップダウンを更新（30秒ごと）
+    setInterval(() => {
+        forceUpdateImageDropdowns();
+    }, 30000);
 });
 
 // コントロールの初期化
@@ -585,6 +590,9 @@ function updateImageDropdowns(images) {
         if (block.type === 'wait_for_element' || block.type === 'image_variable') {
             const dropdown = block.getField('IMAGE_NAME');
             if (dropdown) {
+                // 現在の選択値を保存
+                const currentValue = dropdown.getValue();
+                
                 // 新しいオプションを作成
                 const options = [['画像を選択', '']];
                 images.forEach(img => {
@@ -593,10 +601,35 @@ function updateImageDropdowns(images) {
                 
                 // ドロップダウンを更新
                 dropdown.menuGenerator_ = options;
-                dropdown.setValue('');
+                
+                // 現在の値が新しいオプションに存在するかチェック
+                const valueExists = images.some(img => img.name === currentValue);
+                if (valueExists && currentValue !== '') {
+                    // 既存の選択値を維持
+                    dropdown.setValue(currentValue);
+                } else if (currentValue !== '') {
+                    // 選択されていた画像が削除された場合のみリセット
+                    dropdown.setValue('');
+                }
+                // 初期状態（''）の場合は何もしない
             }
         }
     });
+}
+
+// ドロップダウン更新を強制的に行う関数
+async function forceUpdateImageDropdowns() {
+    try {
+        const response = await fetch('/api/images/list');
+        const data = await response.json();
+        
+        if (response.ok && data.images) {
+            updateImageDropdowns(data.images);
+            console.log('画像ドロップダウンを更新しました:', data.images);
+        }
+    } catch (error) {
+        console.error('画像ドロップダウン更新エラー:', error);
+    }
 }
 
 
