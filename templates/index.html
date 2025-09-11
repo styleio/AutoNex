@@ -115,8 +115,13 @@
         </category>
         <category name="キーボード" colour="230">
             <block type="key_press"></block>
-            <block type="type_text"></block>
-            <block type="type_text_variable"></block>
+            <block type="type_text_variable">
+                <value name="TEXT">
+                    <block type="text">
+                        <field name="TEXT">入力テキスト</field>
+                    </block>
+                </value>
+            </block>
         </category>
         <category name="制御" colour="160">
             <block type="wait">
@@ -163,7 +168,13 @@
                 <mutation items="2"></mutation>
             </block>
             <block type="file_read_text"></block>
-            <block type="file_read_path"></block>
+            <block type="file_read_path">
+                <value name="PATH">
+                    <block type="text">
+                        <field name="TEXT">~/Documents/myfile.txt</field>
+                    </block>
+                </value>
+            </block>
         </category>
         <category name="画像" colour="340">
             <block type="image_variable"></block>
