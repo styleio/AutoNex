@@ -161,17 +161,19 @@ body {
 }
 
 .side-panel {
-    width: 300px;
+    width: 350px;
     background-color: white;
     border-left: 1px solid #ddd;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    height: 100%;
 }
 
 .info-panel {
-    padding: 20px;
+    padding: 15px;
     border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
 }
 
 .info-panel h3 {
@@ -181,37 +183,40 @@ body {
 }
 
 #current-position {
-    padding: 15px;
+    padding: 12px;
     background-color: #ecf0f1;
     border-radius: 5px;
     text-align: center;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 500;
 }
 
 .image-library-panel {
     border-bottom: 1px solid #ddd;
-    padding: 20px;
-    max-height: 400px;
-    overflow: hidden;
+    padding: 15px;
+    flex: 1.5;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    min-height: 300px;
 }
 
 .image-library-panel h3 {
     font-size: 16px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     color: #2c3e50;
+    flex-shrink: 0;
 }
 
 .upload-area {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
 .upload-zone {
     border: 2px dashed #bdc3c7;
     border-radius: 8px;
-    padding: 20px;
+    padding: 15px;
     text-align: center;
     background-color: #f8f9fa;
     cursor: pointer;
@@ -244,7 +249,30 @@ body {
 .image-list {
     flex: 1;
     overflow-y: auto;
-    min-height: 150px;
+    overflow-x: hidden;
+    min-height: 0;
+    /* スクロールバーのスタイル */
+    scrollbar-width: thin;
+    scrollbar-color: #bdc3c7 #f8f9fa;
+}
+
+/* Webkitブラウザ用のスクロールバースタイル */
+.image-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.image-list::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.image-list::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 4px;
+}
+
+.image-list::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
 }
 
 .no-images {
@@ -327,13 +355,15 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 15px;
+    min-height: 200px;
 }
 
 .log-panel h3 {
     font-size: 16px;
     margin-bottom: 10px;
     color: #2c3e50;
+    flex-shrink: 0;
 }
 
 #execution-log {
@@ -343,8 +373,32 @@ body {
     border-radius: 4px;
     padding: 10px;
     overflow-y: auto;
+    overflow-x: hidden;
     font-family: monospace;
     font-size: 13px;
+    min-height: 0;
+    /* スクロールバーのスタイル */
+    scrollbar-width: thin;
+    scrollbar-color: #bdc3c7 #f8f9fa;
+}
+
+/* Webkitブラウザ用のスクロールバースタイル */
+#execution-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+#execution-log::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+#execution-log::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 4px;
+}
+
+#execution-log::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
 }
 
 .log-entry {
