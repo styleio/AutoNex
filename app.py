@@ -136,8 +136,44 @@ def type_text():
         if not text:
             return jsonify({'error': 'テキストが指定されていません'}), 400
         
-        pyautogui.typewrite(text)
-        return jsonify({'status': 'success', 'message': f'テキスト「{text}」を入力しました'})
+        # 日本語を含むかチェック
+        has_multibyte = any(ord(char) > 127 for char in text)
+        
+        if has_multibyte:
+            # 日本語などのマルチバイト文字が含まれる場合、クリップボード経由で入力
+            import pyperclip
+            
+            # 現在のクリップボードを保存
+            original_clipboard = ''
+            try:
+                original_clipboard = pyperclip.paste()
+            except:
+                pass
+            
+            # テキストをクリップボードにコピー
+            pyperclip.copy(text)
+            
+            # Ctrl+V (Windows/Linux) または Cmd+V (Mac) でペースト
+            import platform
+            if platform.system() == 'Darwin':  # Mac
+                pyautogui.hotkey('command', 'v')
+            else:  # Windows/Linux
+                pyautogui.hotkey('ctrl', 'v')
+            
+            # 少し待機
+            time.sleep(0.1)
+            
+            # クリップボードを元に戻す
+            try:
+                pyperclip.copy(original_clipboard)
+            except:
+                pass
+            
+            return jsonify({'status': 'success', 'message': f'テキスト「{text}」を入力しました（クリップボード経由）'})
+        else:
+            # ASCII文字のみの場合は通常のtypewriteを使用
+            pyautogui.typewrite(text)
+            return jsonify({'status': 'success', 'message': f'テキスト「{text}」を入力しました'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

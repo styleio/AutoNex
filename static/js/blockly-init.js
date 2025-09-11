@@ -277,7 +277,16 @@ function defineCustomBlocks() {
                 {
                     "type": "field_dropdown",
                     "name": "IMAGE_NAME",
-                    "options": [["画像を選択", ""]]
+                    "options": function() {
+                        // 画像リストを取得してオプションを生成
+                        const options = [['画像を選択', '']];
+                        if (typeof window.imageList !== 'undefined' && Array.isArray(window.imageList)) {
+                            window.imageList.forEach(img => {
+                                options.push([img.name, img.name]);
+                            });
+                        }
+                        return options;
+                    }
                 },
                 {
                     "type": "input_value",
@@ -303,7 +312,16 @@ function defineCustomBlocks() {
                 {
                     "type": "field_dropdown",
                     "name": "IMAGE_NAME",
-                    "options": [["画像を選択", ""]]
+                    "options": function() {
+                        // 画像リストを取得してオプションを生成
+                        const options = [['画像を選択', '']];
+                        if (typeof window.imageList !== 'undefined' && Array.isArray(window.imageList)) {
+                            window.imageList.forEach(img => {
+                                options.push([img.name, img.name]);
+                            });
+                        }
+                        return options;
+                    }
                 }
             ],
             "output": "String",

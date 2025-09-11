@@ -187,6 +187,11 @@ async function loadProgram() {
         const failsafeCheckbox = document.getElementById('failsafe-enabled');
         failsafeCheckbox.checked = data.failsafeEnabled !== false; // デフォルトはtrue
         
+        // ドロップダウンを更新（少し遅延を入れて確実に更新）
+        setTimeout(() => {
+            forceUpdateImageDropdowns();
+        }, 100);
+        
         showMessage('読み込みました', 'success');
     } catch (error) {
         console.error('Load program error:', error);
