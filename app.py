@@ -587,5 +587,68 @@ def delete_image(name):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/images/find', methods=['POST'])
+def find_image_on_screen():
+    try:
+        data = request.get_json()
+        image_name = data.get('imageName')
+        confidence = data.get('confidence', 0.8)
+        
+        if not image_name:
+            return jsonify({'error': '画像名が指定されていません'}), 400
+        
+        # 画像データを名前で取得
+        with open(IMG_JSON, 'r', encoding='utf-8') as f:
+            images_data = json.load(f)
+        
+        # 名前で画像を検索
+        image_info = None
+        for img in images_data['images']:
+            if img['name'] == image_name:
+                image_info = img
+                break
+        
+        if not image_info:
+            return jsonify({'error': f'画像「{image_name}」が見つかりません'}), 404
+        
+        # 画像ファイルを読み込む
+        filepath = os.path.join(IMG_DIR, image_info['filename'])
+        if not os.path.exists(filepath):
+            return jsonify({'error': f'画像ファイルが存在しません'}), 404
+        
+        # OpenCVで画像を読み込む
+        template = cv2.imread(filepath)
+        
+        # スクリーンショットを取得
+        screenshot = pyautogui.screenshot()
+        screenshot_cv = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+        
+        # テンプレートマッチング
+        result = cv2.matchTemplate(screenshot_cv, template, cv2.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+        
+        if max_val >= confidence:
+            # 画像が見つかった
+            h, w = template.shape[:2]
+            
+            return jsonify({
+                'status': 'success',
+                'message': f'画像「{image_name}」が見つかりました（信頼度: {max_val:.2f}）',
+                'location': {
+                    'x': max_loc[0],
+                    'y': max_loc[1],
+                    'width': w,
+                    'height': h,
+                    'center_x': max_loc[0] + w // 2,
+                    'center_y': max_loc[1] + h // 2
+                },
+                'confidence': max_val
+            })
+        else:
+            return jsonify({'error': f'画像「{image_name}」が画面上に見つかりません（最大信頼度: {max_val:.2f}）'}), 404
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

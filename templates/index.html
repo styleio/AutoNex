@@ -92,6 +92,7 @@
                     </block>
                 </value>
             </block>
+            <block type="mouse_move_to_image"></block>
             <block type="mouse_scroll">
                 <value name="AMOUNT">
                     <block type="math_number">
@@ -170,6 +171,7 @@
     
     <!-- Application Scripts -->
     <script src="{{ url_for('static', filename='js/blockly-init.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/blocks.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

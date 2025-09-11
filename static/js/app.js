@@ -315,6 +315,63 @@ async function mouseScroll(amount, direction) {
     }
 }
 
+async function mouseMove(x, y) {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    addLog(`マウス移動: (${x}, ${y})`, 'info');
+    
+    const response = await fetch('/api/move', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ x, y })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'マウス移動エラー');
+    }
+}
+
+async function mouseMoveToImage(imageName, position) {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    if (!imageName) {
+        throw new Error('画像名が指定されていません');
+    }
+    
+    addLog(`画像「${imageName}」の${position === 'center' ? '中央' : '起点'}へマウス移動`, 'info');
+    
+    // 画像を検索
+    const findResponse = await fetch('/api/images/find', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ imageName })
+    });
+    
+    const findData = await findResponse.json();
+    if (!findResponse.ok) {
+        throw new Error(findData.error || '画像検索エラー');
+    }
+    
+    // 座標を計算
+    let targetX, targetY;
+    if (position === 'center') {
+        targetX = findData.location.center_x;
+        targetY = findData.location.center_y;
+    } else {
+        targetX = findData.location.x;
+        targetY = findData.location.y;
+    }
+    
+    // マウスを移動
+    await mouseMove(targetX, targetY);
+    addLog(`画像が見つかりました: (${targetX}, ${targetY})`, 'success');
+}
+
 async function keyPress(key) {
     if (stopRequested) throw new Error('実行が停止されました');
     
@@ -583,11 +640,14 @@ async function waitForElementByName(imageName, timeout = 30, confidence = 80) {
 
 
 function updateImageDropdowns(images) {
+    // グローバル変数に画像リストを保存
+    window.imageList = images;
+    
     // すべてのimage_nameドロップダウンを更新
     const blocks = workspace.getAllBlocks();
     
     blocks.forEach(block => {
-        if (block.type === 'wait_for_element' || block.type === 'image_variable') {
+        if (block.type === 'wait_for_element' || block.type === 'image_variable' || block.type === 'mouse_move_to_image') {
             const dropdown = block.getField('IMAGE_NAME');
             if (dropdown) {
                 // 現在の選択値を保存

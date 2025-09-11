@@ -3,6 +3,83 @@ if (typeof Blockly === 'undefined') {
     console.error('Blockly is not loaded');
 }
 
+// ジェネレータの初期化関数
+function initializeGenerators() {
+    if (typeof javascript !== 'undefined' && javascript.javascriptGenerator) {
+        // 新しい形式のジェネレータを使用
+        javascript.javascriptGenerator.forBlock['mouse_click'] = function(block, generator) {
+            var value_x = generator.valueToCode(block, 'X', javascript.Order.ATOMIC) || '0';
+            var value_y = generator.valueToCode(block, 'Y', javascript.Order.ATOMIC) || '0';
+            var code = 'await mouseClick(' + value_x + ', ' + value_y + ');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['mouse_move'] = function(block, generator) {
+            var value_x = generator.valueToCode(block, 'X', javascript.Order.ATOMIC) || '0';
+            var value_y = generator.valueToCode(block, 'Y', javascript.Order.ATOMIC) || '0';
+            var code = 'await mouseMove(' + value_x + ', ' + value_y + ');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['mouse_move_to_image'] = function(block, generator) {
+            var dropdown_image = block.getFieldValue('IMAGE_NAME');
+            var dropdown_position = block.getFieldValue('POSITION');
+            var code = 'await mouseMoveToImage(\'' + dropdown_image + '\', \'' + dropdown_position + '\');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['mouse_scroll'] = function(block, generator) {
+            var value_amount = generator.valueToCode(block, 'AMOUNT', javascript.Order.ATOMIC) || '3';
+            var dropdown_direction = block.getFieldValue('DIRECTION');
+            var code = 'await mouseScroll(' + value_amount + ', \'' + dropdown_direction + '\');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['key_press'] = function(block, generator) {
+            var text_key = block.getFieldValue('KEY');
+            var code = 'await keyPress(\'' + text_key + '\');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['type_text'] = function(block, generator) {
+            var text_text = block.getFieldValue('TEXT');
+            var escaped_text = text_text.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            var code = 'await typeText(\'' + escaped_text + '\');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['wait'] = function(block, generator) {
+            var value_time = generator.valueToCode(block, 'TIME', javascript.Order.ATOMIC) || '1';
+            var code = 'await wait(' + value_time + ');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['repeat_times'] = function(block, generator) {
+            var value_times = generator.valueToCode(block, 'TIMES', javascript.Order.ATOMIC) || '1';
+            var statements_do = generator.statementToCode(block, 'DO');
+            var code = 'for (let i = 0; i < ' + value_times + '; i++) {\n' + statements_do + '}\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['browser_open_url'] = function(block, generator) {
+            var text_url = block.getFieldValue('URL');
+            var escaped_url = text_url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            var code = 'await openUrl(\'' + escaped_url + '\');\n';
+            return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['browser_refresh'] = function(block, generator) {
+            var code = 'await refreshBrowser();\n';
+            return code;
+        };
+    }
+}
+
+// ページロード時に実行
+window.addEventListener('load', function() {
+    setTimeout(initializeGenerators, 100);
+});
+
 // マウスクリックブロック
 Blockly.Blocks['mouse_click'] = {
     init: function() {
@@ -54,6 +131,52 @@ Blockly.JavaScript['mouse_move'] = function(block) {
     var code = 'await mouseMove(' + value_x + ', ' + value_y + ');\n';
     return code;
 };
+
+// 画像へマウス移動ブロック
+Blockly.Blocks['mouse_move_to_image'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("画像")
+            .appendField(new Blockly.FieldDropdown(this.generateImageOptions.bind(this)), "IMAGE_NAME")
+            .appendField("の")
+            .appendField(new Blockly.FieldDropdown([["中央", "center"], ["起点", "topleft"]]), "POSITION")
+            .appendField("までマウスを移動");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(120);
+        this.setTooltip("画像を検索してマウスを移動します");
+    },
+    generateImageOptions: function() {
+        // 画像リストを取得してオプションを生成
+        const options = [['画像を選択', '']];
+        
+        // グローバル変数から画像リストを取得（blockly-init.jsで定義）
+        if (typeof window.imageList !== 'undefined' && Array.isArray(window.imageList)) {
+            window.imageList.forEach(img => {
+                options.push([img.name, img.name]);
+            });
+        }
+        
+        return options;
+    }
+};
+
+// JavaScript generator for mouse_move_to_image
+if (typeof javascript !== 'undefined' && javascript.javascriptGenerator) {
+    javascript.javascriptGenerator.forBlock['mouse_move_to_image'] = function(block, generator) {
+        var dropdown_image = block.getFieldValue('IMAGE_NAME');
+        var dropdown_position = block.getFieldValue('POSITION');
+        var code = 'await mouseMoveToImage(\'' + dropdown_image + '\', \'' + dropdown_position + '\');\n';
+        return code;
+    };
+} else if (typeof Blockly.JavaScript !== 'undefined') {
+    Blockly.JavaScript['mouse_move_to_image'] = function(block) {
+        var dropdown_image = block.getFieldValue('IMAGE_NAME');
+        var dropdown_position = block.getFieldValue('POSITION');
+        var code = 'await mouseMoveToImage(\'' + dropdown_image + '\', \'' + dropdown_position + '\');\n';
+        return code;
+    };
+}
 
 // スクロールブロック
 Blockly.Blocks['mouse_scroll'] = {
