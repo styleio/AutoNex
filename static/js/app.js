@@ -920,6 +920,72 @@ function clearLog() {
     executionLog.innerHTML = '';
 }
 
+// ファイル読み込み関数（ダイアログ）
+async function readTextFile() {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    addLog('ファイルダイアログを開いています...', 'info');
+    
+    try {
+        const response = await fetch('/api/file/read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'ファイル読み込みエラー');
+        }
+        
+        if (data.status === 'cancelled') {
+            addLog('ファイル選択がキャンセルされました', 'info');
+            return '';
+        }
+        
+        addLog(`ファイル「${data.filename}」を読み込みました`, 'success');
+        return data.content;
+    } catch (error) {
+        addLog(`ファイル読み込みエラー: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+// ファイル読み込み関数（パス指定）
+async function readTextFileFromPath(filePath) {
+    if (stopRequested) throw new Error('実行が停止されました');
+    
+    if (!filePath) {
+        throw new Error('ファイルパスが指定されていません');
+    }
+    
+    addLog(`ファイル「${filePath}」を読み込んでいます...`, 'info');
+    
+    try {
+        const response = await fetch('/api/file/read-path', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ path: filePath })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'ファイル読み込みエラー');
+        }
+        
+        addLog(`ファイル「${data.filename}」を読み込みました`, 'success');
+        return data.content;
+    } catch (error) {
+        addLog(`ファイル読み込みエラー: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
 // マウス位置の更新
 function updateMousePosition() {
     setInterval(async () => {

@@ -139,8 +139,11 @@ def type_text():
         # 日本語を含むかチェック
         has_multibyte = any(ord(char) > 127 for char in text)
         
-        if has_multibyte:
-            # 日本語などのマルチバイト文字が含まれる場合、クリップボード経由で入力
+        # 改行が含まれているかもチェック
+        has_newline = '\n' in text or '\r' in text
+        
+        if has_multibyte or has_newline:
+            # 日本語などのマルチバイト文字または改行が含まれる場合、クリップボード経由で入力
             import pyperclip
             
             # 現在のクリップボードを保存
@@ -169,7 +172,12 @@ def type_text():
             except:
                 pass
             
-            return jsonify({'status': 'success', 'message': f'テキスト「{text}」を入力しました（クリップボード経由）'})
+            # メッセージ用のテキスト（改行を可視化）
+            display_text = text.replace('\n', '\\n').replace('\r', '\\r')
+            if len(display_text) > 50:
+                display_text = display_text[:50] + '...'
+            
+            return jsonify({'status': 'success', 'message': f'テキスト「{display_text}」を入力しました（クリップボード経由）'})
         else:
             # ASCII文字のみの場合は通常のtypewriteを使用
             pyautogui.typewrite(text)
@@ -620,6 +628,140 @@ def delete_image(name):
                 return jsonify({'status': 'success', 'message': f'画像「{name}」を削除しました'})
         
         return jsonify({'error': f'画像「{name}」が見つかりません'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/file/read', methods=['POST'])
+def read_file():
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        import platform
+        import os
+        
+        # tkinterのルートウィンドウを作成（非表示）
+        root = tk.Tk()
+        root.withdraw()
+        
+        # OSに応じた設定
+        if platform.system() == 'Darwin':  # Mac
+            # Macで前面に表示
+            root.lift()
+            root.attributes('-topmost', True)
+            root.update()
+        elif platform.system() == 'Windows':
+            # Windowsで前面に表示
+            root.attributes('-topmost', True)
+            root.update()
+        
+        # ファイルダイアログを表示
+        file_path = filedialog.askopenfilename(
+            title="テキストファイルを選択",
+            filetypes=[
+                ("テキストファイル", "*.txt"),
+                ("CSVファイル", "*.csv"),
+                ("JSONファイル", "*.json"),
+                ("すべてのファイル", "*.*")
+            ],
+            parent=root
+        )
+        
+        # ルートウィンドウを破棄
+        root.destroy()
+        
+        if not file_path:
+            return jsonify({'status': 'cancelled', 'message': 'ファイル選択がキャンセルされました'}), 200
+        
+        # ファイルを読み込む
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            # UTF-8で読み込めない場合は、システムのデフォルトエンコーディングで試す
+            try:
+                with open(file_path, 'r', encoding='cp932') as f:  # Windows日本語
+                    content = f.read()
+            except:
+                with open(file_path, 'r', encoding='shift_jis') as f:  # 別の日本語エンコーディング
+                    content = f.read()
+        
+        return jsonify({
+            'status': 'success',
+            'content': content,
+            'filename': os.path.basename(file_path),
+            'path': file_path
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/file/read-path', methods=['POST'])
+def read_file_path():
+    try:
+        data = request.get_json()
+        file_path = data.get('path')
+        
+        if not file_path:
+            return jsonify({'error': 'ファイルパスが指定されていません'}), 400
+        
+        import os
+        import platform
+        
+        # パスの正規化（OSに応じて）
+        # ユーザーホームディレクトリの展開
+        if file_path.startswith('~'):
+            file_path = os.path.expanduser(file_path)
+        
+        # 環境変数の展開
+        file_path = os.path.expandvars(file_path)
+        
+        # 絶対パスに変換
+        file_path = os.path.abspath(file_path)
+        
+        # ファイルの存在確認
+        if not os.path.exists(file_path):
+            return jsonify({'error': f'ファイルが存在しません: {file_path}'}), 404
+        
+        if not os.path.isfile(file_path):
+            return jsonify({'error': f'指定されたパスはファイルではありません: {file_path}'}), 400
+        
+        # ファイルを読み込む
+        content = None
+        encodings = ['utf-8', 'utf-8-sig', 'shift_jis', 'cp932', 'euc-jp', 'iso-2022-jp']
+        
+        # 複数のエンコーディングを試す
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    content = f.read()
+                break
+            except UnicodeDecodeError:
+                continue
+            except Exception:
+                continue
+        
+        if content is None:
+            # バイナリモードで読み込んでみる
+            try:
+                with open(file_path, 'rb') as f:
+                    raw_content = f.read()
+                    # 自動検出を試みる
+                    import chardet
+                    detected = chardet.detect(raw_content)
+                    if detected['encoding']:
+                        content = raw_content.decode(detected['encoding'])
+                    else:
+                        return jsonify({'error': 'ファイルのエンコーディングを判定できません'}), 500
+            except:
+                return jsonify({'error': 'ファイルを読み込めません'}), 500
+        
+        return jsonify({
+            'status': 'success',
+            'content': content,
+            'filename': os.path.basename(file_path),
+            'path': file_path
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

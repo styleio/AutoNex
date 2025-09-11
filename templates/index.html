@@ -116,6 +116,7 @@
         <category name="キーボード" colour="230">
             <block type="key_press"></block>
             <block type="type_text"></block>
+            <block type="type_text_variable"></block>
         </category>
         <category name="制御" colour="160">
             <block type="wait">
@@ -155,6 +156,14 @@
             <block type="math_number">
                 <field name="NUM">0</field>
             </block>
+            <block type="text">
+                <field name="TEXT">テキスト</field>
+            </block>
+            <block type="text_join">
+                <mutation items="2"></mutation>
+            </block>
+            <block type="file_read_text"></block>
+            <block type="file_read_path"></block>
         </category>
         <category name="画像" colour="340">
             <block type="image_variable"></block>

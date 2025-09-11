@@ -48,6 +48,12 @@ function initializeGenerators() {
             return code;
         };
 
+        javascript.javascriptGenerator.forBlock['type_text_variable'] = function(block, generator) {
+            var value_text = generator.valueToCode(block, 'TEXT', javascript.Order.ATOMIC) || "''";
+            var code = 'await typeText(' + value_text + ');\n';
+            return code;
+        };
+
         javascript.javascriptGenerator.forBlock['wait'] = function(block, generator) {
             var value_time = generator.valueToCode(block, 'TIME', javascript.Order.ATOMIC) || '1';
             var code = 'await wait(' + value_time + ');\n';
@@ -71,6 +77,17 @@ function initializeGenerators() {
         javascript.javascriptGenerator.forBlock['browser_refresh'] = function(block, generator) {
             var code = 'await refreshBrowser();\n';
             return code;
+        };
+
+        javascript.javascriptGenerator.forBlock['file_read_text'] = function(block, generator) {
+            var code = 'await readTextFile()';
+            return [code, javascript.Order.AWAIT];
+        };
+
+        javascript.javascriptGenerator.forBlock['file_read_path'] = function(block, generator) {
+            var value_path = generator.valueToCode(block, 'PATH', javascript.Order.ATOMIC) || "''";
+            var code = 'await readTextFileFromPath(' + value_path + ')';
+            return [code, javascript.Order.AWAIT];
         };
     }
 }
@@ -220,7 +237,7 @@ Blockly.JavaScript['key_press'] = function(block) {
     return code;
 };
 
-// テキスト入力ブロック
+// テキスト入力ブロック（固定テキスト）
 Blockly.Blocks['type_text'] = {
     init: function() {
         this.appendDummyInput()
@@ -231,6 +248,21 @@ Blockly.Blocks['type_text'] = {
         this.setNextStatement(true, null);
         this.setColour(230);
         this.setTooltip("指定したテキストを入力します");
+    }
+};
+
+// テキスト入力ブロック（変数入力対応）
+Blockly.Blocks['type_text_variable'] = {
+    init: function() {
+        this.appendValueInput("TEXT")
+            .setCheck("String")
+            .appendField("テキスト");
+        this.appendDummyInput()
+            .appendField("を入力");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(230);
+        this.setTooltip("変数や文字列を入力します（改行・日本語対応）");
     }
 };
 
@@ -324,6 +356,48 @@ Blockly.Blocks['browser_refresh'] = {
 Blockly.JavaScript['browser_refresh'] = function(block) {
     var code = 'await refreshBrowser();\n';
     return code;
+};
+
+// ファイル読み込みブロック（ダイアログ）
+Blockly.Blocks['file_read_text'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("テキストファイルを開く");
+        this.setOutput(true, "String");
+        this.setColour(330);
+        this.setTooltip("ファイルダイアログを開いてテキストファイルを読み込みます");
+    }
+};
+
+// ファイル読み込みブロック（パス指定）
+Blockly.Blocks['file_read_path'] = {
+    init: function() {
+        this.appendValueInput("PATH")
+            .setCheck("String")
+            .appendField("パス");
+        this.appendDummyInput()
+            .appendField("のファイルを読み込む");
+        this.setOutput(true, "String");
+        this.setColour(330);
+        this.setTooltip("指定したパスのテキストファイルを読み込みます（~/やC:\\などOS固有のパスに対応）");
+    }
+};
+
+Blockly.JavaScript['type_text_variable'] = function(block) {
+    var value_text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC) || "''";
+    var code = 'await typeText(' + value_text + ');\n';
+    return code;
+};
+
+Blockly.JavaScript['file_read_text'] = function(block) {
+    var code = 'await readTextFile()';
+    return [code, Blockly.JavaScript.ORDER_AWAIT || Blockly.JavaScript.ORDER_NONE];
+};
+
+Blockly.JavaScript['file_read_path'] = function(block) {
+    var value_path = Blockly.JavaScript.valueToCode(block, 'PATH', Blockly.JavaScript.ORDER_ATOMIC) || "''";
+    var code = 'await readTextFileFromPath(' + value_path + ')';
+    return [code, Blockly.JavaScript.ORDER_AWAIT || Blockly.JavaScript.ORDER_NONE];
 };
 
 console.log('Custom blocks loaded');
