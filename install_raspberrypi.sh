@@ -57,7 +57,7 @@ source $VENV_NAME/bin/activate
 
 # Upgrade pip, setuptools and wheel first
 echo "Upgrading pip, setuptools, and wheel..."
-pip install --upgrade pip setuptools wheel
+$VENV_NAME/bin/pip install --upgrade pip setuptools wheel
 
 # Check if requirements_raspberrypi.txt exists, otherwise use requirements.txt
 if [ -f "requirements_raspberrypi.txt" ]; then
@@ -71,7 +71,7 @@ echo
 echo "Installing required packages from $REQUIREMENTS_FILE..."
 echo "This may take a few minutes..."
 echo
-pip install --no-cache-dir -r $REQUIREMENTS_FILE
+$VENV_NAME/bin/pip install --no-cache-dir -r $REQUIREMENTS_FILE
 
 if [ $? -ne 0 ]; then
     echo
@@ -101,4 +101,4 @@ then
 fi
 
 # Start app
-python app.py
+$VENV_NAME/bin/python app.py
